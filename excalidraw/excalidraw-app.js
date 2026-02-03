@@ -6,6 +6,7 @@
 // Initialize components
 let excalidrawAPI;
 let excalidrawController;
+let desmosIntegration;
 let matrixClient;
 let sageIntegration;
 let askFacultyClient;
@@ -43,6 +44,13 @@ async function initializeApp() {
     document.getElementById('clear-excalidraw-btn').addEventListener('click', () => {
         if (confirm('Clear the entire whiteboard?')) {
             excalidrawController.clear();
+        }
+    });
+    
+    // Setup clear Desmos button
+    document.getElementById('clear-desmos-btn').addEventListener('click', () => {
+        if (desmosIntegration) {
+            desmosIntegration.clearAll();
         }
     });
 
@@ -328,11 +336,27 @@ async function executeLLMDrawingCommands(llmResponse) {
     // Or natural language: "draw a circle", "graph y = x^2", etc.
     
     try {
-        // Try to find JSON commands first
+        // Check for Desmos graphing commands first
+        if (desmosIntegration) {
+            const desmosCommand = desmosIntegration.parseDesmosCommand(llmResponse);
+            if (desmosCommand && desmosCommand.type === 'graph') {
+                desmosIntegration.graphFunction(desmosCommand.expression);
+                return;
+            }
+        }
+        
+        // Try to find JSON commands
         const jsonMatch = llmResponse.match(/\{[\s\S]*"command"[\s\S]*"draw"[\s\S]*\}/);
         if (jsonMatch) {
             const command = JSON.parse(jsonMatch[0]);
             if (command.command === 'draw' && command.type) {
+                // Check if it's a Desmos graph command
+                if (command.type === 'desmos' || (command.type === 'graph' && command.use_desmos)) {
+                    if (desmosIntegration && command.expression) {
+                        desmosIntegration.graphFunction(command.expression, command.options);
+                        return;
+                    }
+                }
                 await executeDrawingCommand(command);
                 return;
             }
@@ -343,6 +367,18 @@ async function executeLLMDrawingCommands(llmResponse) {
         const lower = llmResponse.toLowerCase();
         
         if (drawingKeywords.some(keyword => lower.includes(keyword))) {
+            // Check if it's a graph command - use Desmos
+            if ((lower.includes('graph') || lower.includes('plot')) && 
+                (lower.includes('y =') || lower.includes('f(x)') || lower.match(/\w+\s*=\s*\w+/))) {
+                if (desmosIntegration) {
+                    const desmosCommand = desmosIntegration.parseDesmosCommand(llmResponse);
+                    if (desmosCommand) {
+                        desmosIntegration.graphFunction(desmosCommand.expression);
+                        return;
+                    }
+                }
+            }
+            
             // Regular drawing command
             if (excalidrawController) {
                 excalidrawController.drawFromLLM(llmResponse);

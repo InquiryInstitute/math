@@ -7,6 +7,7 @@
 let tldrawEditor;
 let tldrawController;
 let mathGraphing;
+let desmosIntegration;
 let matrixClient;
 let sageIntegration;
 let askFacultyClient;
@@ -28,9 +29,12 @@ async function initializeApp() {
     // Initialize SageMath
     sageIntegration = new SageIntegration();
     
+    // Initialize Desmos integration
+    desmosIntegration = new DesmosIntegration();
+    
     // Initialize ask-faculty client (Pythagoras)
     // Note: You'll need to set SUPABASE_URL and SUPABASE_ANON_KEY
-    const supabaseUrl = window.SUPABASE_URL || 'https://qjqjqjqjqjqjqjqj.supabase.co';
+    const supabaseUrl = window.SUPABASE_URL || 'https://qjqjqjqjqjqjqj.supabase.co';
     const supabaseAnonKey = window.SUPABASE_ANON_KEY || '';
     askFacultyClient = new AskFacultyClient(supabaseUrl, supabaseAnonKey);
     
@@ -51,6 +55,13 @@ async function initializeApp() {
     document.getElementById('clear-tldraw-btn').addEventListener('click', () => {
         if (confirm('Clear the entire whiteboard?')) {
             tldrawController.clear();
+        }
+    });
+    
+    // Setup clear Desmos button
+    document.getElementById('clear-desmos-btn').addEventListener('click', () => {
+        if (desmosIntegration) {
+            desmosIntegration.clearAll();
         }
     });
 
