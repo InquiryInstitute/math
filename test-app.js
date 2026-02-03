@@ -56,19 +56,97 @@ async function initializeApp() {
 function initializeTldraw() {
     const container = document.getElementById('tldraw-canvas');
     
-    // Create tldraw editor
-    const { editor, store } = new TldrawEditor({
-        container,
-        defaultName: 'Math Whiteboard',
-        persistenceKey: 'math-whiteboard',
-    });
+    // Create a simple editor-like object that works with our controller
+    // Note: Full tldraw integration requires React - this is a simplified version
+    // that accepts LLM commands and draws on canvas
+    const editor = {
+        shapes: [],
+        getViewportPageCenter: () => {
+            const rect = container.getBoundingClientRect();
+            return { x: rect.width / 2, y: rect.height / 2 };
+        },
+        createShape: (shapeConfig) => {
+            console.log('Creating shape:', shapeConfig);
+            const shape = {
+                id: 'shape-' + Date.now(),
+                ...shapeConfig,
+            };
+            editor.shapes.push(shape);
+            
+            // Draw the shape on a canvas
+            drawShapeOnCanvas(container, shapeConfig);
+            
+            return shape;
+        },
+        getCurrentPageShapes: () => editor.shapes,
+        deleteShapes: (ids) => {
+            editor.shapes = editor.shapes.filter(s => !ids.includes(s.id));
+            redrawCanvas(container, editor.shapes);
+        },
+    };
 
     tldrawEditor = editor;
-    
-    // Initialize tldraw controller
     tldrawController = new TldrawController(editor);
     
-    console.log('tldraw initialized');
+    console.log('tldraw initialized (canvas-based)');
+}
+
+// Helper function to draw shapes on canvas
+function drawShapeOnCanvas(container, shape) {
+    let canvas = container.querySelector('canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.background = '#2d2d1e';
+        container.appendChild(canvas);
+    }
+    
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    
+    if (shape.type === 'geo') {
+        if (shape.props.geo === 'ellipse' || shape.props.geo === 'circle') {
+            ctx.beginPath();
+            ctx.ellipse(shape.x + shape.props.w / 2, shape.y + shape.props.h / 2, 
+                       shape.props.w / 2, shape.props.h / 2, 0, 0, 2 * Math.PI);
+            ctx.stroke();
+        } else if (shape.props.geo === 'rectangle') {
+            ctx.strokeRect(shape.x, shape.y, shape.props.w, shape.props.h);
+        } else if (shape.props.geo === 'triangle') {
+            ctx.beginPath();
+            ctx.moveTo(shape.x + shape.props.w / 2, shape.y);
+            ctx.lineTo(shape.x, shape.y + shape.props.h);
+            ctx.lineTo(shape.x + shape.props.w, shape.y + shape.props.h);
+            ctx.closePath();
+            ctx.stroke();
+        }
+    } else if (shape.type === 'line') {
+        const points = shape.props.points;
+        ctx.beginPath();
+        ctx.moveTo(shape.x + points.a1.x, shape.y + points.a1.y);
+        ctx.lineTo(shape.x + points.a2.x, shape.y + points.a2.y);
+        ctx.stroke();
+    } else if (shape.type === 'text') {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px Arial';
+        ctx.fillText(shape.props.text, shape.x, shape.y);
+    }
+}
+
+function redrawCanvas(container, shapes) {
+    let canvas = container.querySelector('canvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    shapes.forEach(shape => {
+        drawShapeOnCanvas(container, shape);
+    });
 }
 
 function setupMatrixConnection() {
