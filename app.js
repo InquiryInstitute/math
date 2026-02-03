@@ -89,12 +89,20 @@ function setupMatrixConnection() {
         }
     });
     
-    // Cancel auth form
+    // Cancel auth form (but keep saved credentials)
     authCancelBtn.addEventListener('click', () => {
         authForm.style.display = 'none';
-        usernameInput.value = '';
-        passwordInput.value = '';
     });
+    
+    // Load saved credentials from localStorage (for testing convenience)
+    const savedUsername = localStorage.getItem('matrix_test_username');
+    const savedPassword = localStorage.getItem('matrix_test_password');
+    if (savedUsername) {
+        usernameInput.value = savedUsername;
+    }
+    if (savedPassword) {
+        passwordInput.value = savedPassword;
+    }
     
     // Connect with credentials
     authConnectBtn.addEventListener('click', async () => {
@@ -105,6 +113,10 @@ function setupMatrixConnection() {
             alert('Please enter both username and password');
             return;
         }
+        
+        // Save credentials to localStorage for testing convenience
+        localStorage.setItem('matrix_test_username', username);
+        localStorage.setItem('matrix_test_password', password);
         
         try {
             connectBtn.textContent = 'Connecting...';
@@ -141,10 +153,6 @@ function setupMatrixConnection() {
             connectBtn.textContent = 'Disconnect';
             statusEl.textContent = 'Connected';
             statusEl.className = 'status-indicator connected';
-            
-            // Clear credentials
-            usernameInput.value = '';
-            passwordInput.value = '';
         } catch (error) {
             console.error('Failed to connect to Matrix:', error);
             connectBtn.textContent = 'Connect';
