@@ -151,11 +151,16 @@ function setupChatInput() {
         
         // Process as command
         const result = await llmController.processMessage(message);
-        if (result && result.success) {
-            if (result.result) {
-                addSystemMessage(`Computation result: ${result.result}`);
-            } else if (result.message) {
-                addSystemMessage(result.message);
+        if (result) {
+            if (result.success) {
+                if (result.result) {
+                    addSystemMessage(`Computation result: ${result.result}`);
+                } else if (result.message) {
+                    addSystemMessage(result.message);
+                }
+            } else {
+                // Show error message if command failed
+                addSystemMessage(`Error: ${result.error || 'Command failed'}`);
             }
         }
     };
