@@ -298,6 +298,40 @@ class TldrawController {
                     },
                 });
                 break;
+
+            case 'graphFunction':
+                // This will be handled by MathGraphing class
+                // Just draw axes here
+                const axisLength = 400;
+                // X-axis
+                editor.createShape({
+                    type: 'line',
+                    x: command.x - axisLength / 2,
+                    y: command.y,
+                    props: {
+                        points: {
+                            a1: { x: 0, y: 0, id: 'a1' },
+                            a2: { x: axisLength, y: 0, id: 'a2' },
+                        },
+                        color: 'white',
+                        size: 'm',
+                    },
+                });
+                // Y-axis
+                editor.createShape({
+                    type: 'line',
+                    x: command.x,
+                    y: command.y - axisLength / 2,
+                    props: {
+                        points: {
+                            a1: { x: 0, y: 0, id: 'a1' },
+                            a2: { x: 0, y: axisLength, id: 'a2' },
+                        },
+                        color: 'white',
+                        size: 'm',
+                    },
+                });
+                break;
         }
     }
 

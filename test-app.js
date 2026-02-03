@@ -6,6 +6,7 @@
 // Initialize components
 let tldrawEditor;
 let tldrawController;
+let mathGraphing;
 let matrixClient;
 let sageIntegration;
 
@@ -25,6 +26,13 @@ async function initializeApp() {
     
     // Initialize SageMath
     sageIntegration = new SageIntegration();
+    
+    // Initialize math graphing (after tldraw is ready)
+    setTimeout(() => {
+        if (tldrawController) {
+            mathGraphing = new MathGraphing(tldrawController, sageIntegration);
+        }
+    }, 500);
     
     // Setup Matrix connection
     setupMatrixConnection();
@@ -294,6 +302,24 @@ function setupChatInput() {
 
 async function processLLMCommand(message) {
     const lower = message.toLowerCase().trim();
+    
+    // Check if it's a graph equation command
+    if ((lower.includes('graph') || lower.includes('plot')) && 
+        (lower.includes('y =') || lower.includes('f(x)') || lower.match(/\w+\s*=\s*\w+/))) {
+        try {
+            if (mathGraphing) {
+                const result = await mathGraphing.graphEquation(message);
+                return result;
+            } else {
+                // Fallback to regular drawing
+                tldrawController.drawFromLLM(message);
+                return { success: true, message: 'Drawing command executed' };
+            }
+        } catch (error) {
+            console.error('Graphing error:', error);
+            return { success: false, error: error.message };
+        }
+    }
     
     // Check if it's a drawing command
     const drawingKeywords = ['draw', 'create', 'make', 'add', 'show', 'display', 'plot', 'graph', 'sketch'];
