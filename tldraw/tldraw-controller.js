@@ -32,10 +32,10 @@ class TldrawController {
         const lower = instruction.toLowerCase().trim();
         console.log('Parsing instruction:', instruction);
 
-        // Get canvas center
+        // Get canvas center using tldraw's real API
         const viewportCenter = this.editor.getViewportPageCenter();
-        const centerX = viewportCenter.x;
-        const centerY = viewportCenter.y;
+        const centerX = viewportCenter.x || 400; // Fallback if not available
+        const centerY = viewportCenter.y || 300; // Fallback if not available
 
         // Draw a circle
         if (lower.includes('circle')) {
@@ -182,9 +182,10 @@ class TldrawController {
     executeCommand(command) {
         const { editor } = this;
         
+        // Use tldraw's real API - createShapes method
         switch (command.type) {
             case 'circle':
-                editor.createShape({
+                editor.createShapes([{
                     type: 'geo',
                     x: command.x - command.radius,
                     y: command.y - command.radius,
@@ -193,15 +194,15 @@ class TldrawController {
                         h: command.radius * 2,
                         geo: 'ellipse',
                         fill: 'none',
-                        color: 'white',
+                        color: 'black',
                         dash: 'draw',
                         size: 'm',
                     },
-                });
+                }]);
                 break;
 
             case 'line':
-                editor.createShape({
+                editor.createShapes([{
                     type: 'line',
                     x: command.x1,
                     y: command.y1,
@@ -210,14 +211,14 @@ class TldrawController {
                             a1: { x: 0, y: 0, id: 'a1' },
                             a2: { x: command.x2 - command.x1, y: command.y2 - command.y1, id: 'a2' },
                         },
-                        color: command.color || 'white',
+                        color: command.color || 'black',
                         size: 'm',
                     },
-                });
+                }]);
                 break;
 
             case 'rectangle':
-                editor.createShape({
+                editor.createShapes([{
                     type: 'geo',
                     x: command.x,
                     y: command.y,
@@ -226,17 +227,17 @@ class TldrawController {
                         h: command.height,
                         geo: 'rectangle',
                         fill: 'none',
-                        color: 'white',
+                        color: 'black',
                         dash: 'draw',
                         size: 'm',
                     },
-                });
+                }]);
                 break;
 
             case 'triangle':
                 const size = command.size;
                 const h = command.height;
-                editor.createShape({
+                editor.createShapes([{
                     type: 'geo',
                     x: command.x - size / 2,
                     y: command.y - h * 2/3,
@@ -245,58 +246,58 @@ class TldrawController {
                         h: h,
                         geo: 'triangle',
                         fill: 'none',
-                        color: 'white',
+                        color: 'black',
                         dash: 'draw',
                         size: 'm',
                     },
-                });
+                }]);
                 break;
 
             case 'graph':
-                // Draw x-axis
-                editor.createShape({
-                    type: 'line',
-                    x: command.x - command.length / 2,
-                    y: command.y,
-                    props: {
-                        points: {
-                            a1: { x: 0, y: 0, id: 'a1' },
-                            a2: { x: command.length, y: 0, id: 'a2' },
+                // Draw x-axis and y-axis
+                editor.createShapes([
+                    {
+                        type: 'line',
+                        x: command.x - command.length / 2,
+                        y: command.y,
+                        props: {
+                            points: {
+                                a1: { x: 0, y: 0, id: 'a1' },
+                                a2: { x: command.length, y: 0, id: 'a2' },
+                            },
+                            color: 'black',
+                            size: 'm',
                         },
-                        color: 'white',
-                        size: 'm',
                     },
-                });
-                
-                // Draw y-axis
-                editor.createShape({
-                    type: 'line',
-                    x: command.x,
-                    y: command.y - command.length / 2,
-                    props: {
-                        points: {
-                            a1: { x: 0, y: 0, id: 'a1' },
-                            a2: { x: 0, y: command.length, id: 'a2' },
+                    {
+                        type: 'line',
+                        x: command.x,
+                        y: command.y - command.length / 2,
+                        props: {
+                            points: {
+                                a1: { x: 0, y: 0, id: 'a1' },
+                                a2: { x: 0, y: command.length, id: 'a2' },
+                            },
+                            color: 'black',
+                            size: 'm',
                         },
-                        color: 'white',
-                        size: 'm',
-                    },
-                });
+                    }
+                ]);
                 break;
 
             case 'text':
-                editor.createShape({
+                editor.createShapes([{
                     type: 'text',
                     x: command.x,
                     y: command.y,
                     props: {
                         text: command.text,
-                        color: 'white',
+                        color: 'black',
                         size: 'm',
                         font: 'draw',
                         align: 'start',
                     },
-                });
+                }]);
                 break;
 
             case 'graphFunction':
@@ -336,8 +337,11 @@ class TldrawController {
     }
 
     clear() {
-        const shapes = this.editor.getCurrentPageShapes();
-        this.editor.deleteShapes(shapes.map(s => s.id));
+        // Use tldraw's real API
+        const shapes = this.editor.getCurrentPageShapeIds();
+        if (shapes.length > 0) {
+            this.editor.deleteShapes(shapes);
+        }
     }
 
     // Parameter controls (similar to blackboard)

@@ -81,41 +81,29 @@ async function initializeApp() {
 }
 
 function initializeTldraw() {
-    const container = document.getElementById('tldraw-canvas');
+    // tldraw is now initialized via React in tldraw-init.js
+    // Wait for the editor to be available from the React component
+    const checkEditor = setInterval(() => {
+        if (window.tldrawEditor) {
+            clearInterval(checkEditor);
+            tldrawEditor = window.tldrawEditor;
+            if (window.tldrawController) {
+                tldrawController = window.tldrawController;
+            } else if (typeof TldrawController !== 'undefined') {
+                tldrawController = new TldrawController(tldrawEditor);
+                window.tldrawController = tldrawController;
+            }
+            console.log('tldraw editor ready');
+        }
+    }, 100);
     
-    // Create a simple editor-like object that works with our controller
-    // Note: Full tldraw integration requires React - this is a simplified version
-    // that accepts LLM commands and draws on canvas
-    const editor = {
-        shapes: [],
-        getViewportPageCenter: () => {
-            const rect = container.getBoundingClientRect();
-            return { x: rect.width / 2, y: rect.height / 2 };
-        },
-        createShape: (shapeConfig) => {
-            console.log('Creating shape:', shapeConfig);
-            const shape = {
-                id: 'shape-' + Date.now(),
-                ...shapeConfig,
-            };
-            editor.shapes.push(shape);
-            
-            // Draw the shape on a canvas
-            drawShapeOnCanvas(container, shapeConfig);
-            
-            return shape;
-        },
-        getCurrentPageShapes: () => editor.shapes,
-        deleteShapes: (ids) => {
-            editor.shapes = editor.shapes.filter(s => !ids.includes(s.id));
-            redrawCanvas(container, editor.shapes);
-        },
-    };
-
-    tldrawEditor = editor;
-    tldrawController = new TldrawController(editor);
-    
-    console.log('tldraw initialized (canvas-based)');
+    // Timeout after 5 seconds
+    setTimeout(() => {
+        clearInterval(checkEditor);
+        if (!tldrawEditor) {
+            console.warn('tldraw editor not available after 5 seconds');
+        }
+    }, 5000);
 }
 
 // Helper function to draw shapes on canvas

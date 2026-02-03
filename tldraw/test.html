@@ -7,6 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Math Teaching Room - tldraw Test</title>
     <link rel="stylesheet" href="../styles.css">
+    <!-- tldraw styles -->
+    <link rel="stylesheet" href="lib/tldraw.css">
     <!-- KaTeX for math rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -82,8 +84,11 @@
     </div>
 
     <!-- Scripts -->
-    <!-- Note: tldraw v2 requires React, using canvas-based fallback instead -->
-    <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/tldraw@2.3.0/dist/tldraw.min.js"></script> -->
+    <!-- React (required for tldraw v2) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- tldraw will be loaded as ES module -->
+    <script type="module" src="tldraw-init.js"></script>
     <script src="https://unpkg.com/matrix-js-sdk@29.1.0/lib/browser-matrix.js"></script>
     <script src="https://sagecell.sagemath.org/static/embedded_sagecell.js"></script>
     <script src="../matrix-client.js"></script>
