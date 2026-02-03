@@ -6,10 +6,17 @@
 class Blackboard {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
+        this.container = document.getElementById(canvasId);
+        
+        // Get initial size
+        const container = this.container.parentElement;
+        const width = container ? container.clientWidth - 32 : 1200; // Account for padding
+        const height = container ? container.clientHeight - 32 : 800;
+        
         this.stage = new Konva.Stage({
             container: canvasId,
-            width: 1200,
-            height: 800,
+            width: width,
+            height: height,
         });
 
         this.layer = new Konva.Layer();
@@ -23,6 +30,41 @@ class Blackboard {
         this.parameters = {};
 
         this.setupEventListeners();
+        this.setupResizeHandler();
+    }
+
+    setupResizeHandler() {
+        // Handle window resize for responsive canvas
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.resize();
+            }, 100);
+        });
+
+        // Also handle orientation change on mobile
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                this.resize();
+            }, 100);
+        });
+
+        // Initial resize check
+        this.resize();
+    }
+
+    resize() {
+        const container = this.container.parentElement;
+        if (!container) return;
+
+        const padding = window.innerWidth <= 768 ? 16 : 32; // Less padding on mobile
+        const width = container.clientWidth - padding;
+        const height = container.clientHeight - padding;
+
+        this.stage.width(width);
+        this.stage.height(height);
+        this.stage.draw();
     }
 
     setupEventListeners() {
