@@ -28,6 +28,9 @@ async function initializeApp() {
     // Initialize SageMath
     sageIntegration = new SageIntegration();
     
+    // Initialize Desmos integration
+    desmosIntegration = new DesmosIntegration();
+    
     // Initialize ask-faculty client (Pythagoras)
     // Note: You'll need to set SUPABASE_URL and SUPABASE_ANON_KEY
     const supabaseUrl = window.SUPABASE_URL || 'https://qjqjqjqjqjqjqjqj.supabase.co';
