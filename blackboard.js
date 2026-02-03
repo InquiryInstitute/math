@@ -404,14 +404,20 @@ class Blackboard {
         // Simple parser - can be enhanced with more sophisticated NLP
         const lower = instruction.toLowerCase();
         
+        // Get canvas center as default position
+        const centerX = this.stage.width() / 2;
+        const centerY = this.stage.height() / 2;
+        
         // Draw a circle
-        if (lower.includes('circle') || lower.includes('draw circle')) {
+        if (lower.includes('circle') || lower.includes('draw circle') || lower.includes('plot circle')) {
             const match = instruction.match(/radius[:\s]+(\d+)/i) || instruction.match(/r[:\s]*=?\s*(\d+)/i);
             const radius = match ? parseInt(match[1]) : 50;
-            const centerMatch = instruction.match(/center[:\s]+\((\d+)[,\s]+(\d+)\)/i);
+            const centerMatch = instruction.match(/center[:\s]+\((\d+)[,\s]+(\d+)\)/i) || 
+                               instruction.match(/at[:\s]+\((\d+)[,\s]+(\d+)\)/i) ||
+                               instruction.match(/(\d+)[,\s]+(\d+)/);
             const center = centerMatch 
                 ? { x: parseInt(centerMatch[1]), y: parseInt(centerMatch[2]) }
-                : { x: 600, y: 400 };
+                : { x: centerX, y: centerY };
             
             return {
                 type: 'circle',
@@ -421,8 +427,9 @@ class Blackboard {
             };
         }
 
-        // Draw a line
-        if (lower.includes('line') || lower.includes('draw line')) {
+        // Draw a line - handle various formats
+        if (lower.includes('line') || lower.includes('draw line') || lower.includes('plot line') || lower.includes('plot a line')) {
+            // Try to find explicit coordinates first
             const points = instruction.match(/\((\d+)[,\s]+(\d+)\)/g);
             if (points && points.length >= 2) {
                 const p1 = points[0].match(/(\d+)[,\s]+(\d+)/);
@@ -435,51 +442,88 @@ class Blackboard {
                     y2: parseInt(p2[2]),
                 };
             }
+            
+            // Try to find "from X,Y to X,Y" format
+            const fromToMatch = instruction.match(/from[:\s]+(\d+)[,\s]+(\d+)[\s]+to[:\s]+(\d+)[,\s]+(\d+)/i);
+            if (fromToMatch) {
+                return {
+                    type: 'line',
+                    x1: parseInt(fromToMatch[1]),
+                    y1: parseInt(fromToMatch[2]),
+                    x2: parseInt(fromToMatch[3]),
+                    y2: parseInt(fromToMatch[4]),
+                };
+            }
+            
+            // Default: draw a horizontal line in the center
+            const length = 200;
+            return {
+                type: 'line',
+                x1: centerX - length / 2,
+                y1: centerY,
+                x2: centerX + length / 2,
+                y2: centerY,
+            };
         }
 
         // Draw a rectangle
-        if (lower.includes('rectangle') || lower.includes('rect')) {
+        if (lower.includes('rectangle') || lower.includes('rect') || lower.includes('draw rectangle') || lower.includes('plot rectangle')) {
             const match = instruction.match(/width[:\s]+(\d+).*height[:\s]+(\d+)/i);
-            if (match) {
-                return {
-                    type: 'rectangle',
-                    x: 400,
-                    y: 300,
-                    width: parseInt(match[1]),
-                    height: parseInt(match[2]),
-                };
-            }
+            const width = match ? parseInt(match[1]) : 100;
+            const height = match ? parseInt(match[2]) : 80;
+            
+            return {
+                type: 'rectangle',
+                x: centerX - width / 2,
+                y: centerY - height / 2,
+                width: width,
+                height: height,
+            };
         }
 
         // Add label
-        if (lower.includes('label') || lower.includes('mark')) {
-            const labelMatch = instruction.match(/label[:\s]+['"]?(\w+)['"]?/i);
+        if (lower.includes('label') || lower.includes('mark') || lower.includes('add label')) {
+            const labelMatch = instruction.match(/label[:\s]+['"]?(\w+)['"]?/i) ||
+                              instruction.match(/['"]?(\w+)['"]?/);
             const posMatch = instruction.match(/at[:\s]+\((\d+)[,\s]+(\d+)\)/i);
             if (labelMatch) {
                 return {
                     type: 'label',
                     text: labelMatch[1],
-                    x: posMatch ? parseInt(posMatch[1]) : 600,
-                    y: posMatch ? parseInt(posMatch[2]) : 400,
+                    x: posMatch ? parseInt(posMatch[1]) : centerX,
+                    y: posMatch ? parseInt(posMatch[2]) : centerY,
                 };
             }
         }
 
         // Add text
-        if (lower.includes('text') || lower.includes('write')) {
-            const textMatch = instruction.match(/['"]([^'"]+)['"]/);
+        if (lower.includes('text') || lower.includes('write') || lower.includes('add text')) {
+            const textMatch = instruction.match(/['"]([^'"]+)['"]/) ||
+                             instruction.match(/text[:\s]+(.+?)(?:\s+at|\s*$)/i) ||
+                             instruction.match(/write[:\s]+(.+?)(?:\s+at|\s*$)/i);
             const posMatch = instruction.match(/at[:\s]+\((\d+)[,\s]+(\d+)\)/i);
             if (textMatch) {
                 return {
                     type: 'text',
-                    text: textMatch[1],
-                    x: posMatch ? parseInt(posMatch[1]) : 600,
-                    y: posMatch ? parseInt(posMatch[2]) : 400,
+                    text: textMatch[1].trim(),
+                    x: posMatch ? parseInt(posMatch[1]) : centerX,
+                    y: posMatch ? parseInt(posMatch[2]) : centerY,
                 };
             }
         }
 
-        throw new Error('Could not parse instruction');
+        // If we get here and it's a drawing command, try to draw a simple line
+        if (lower.includes('draw') || lower.includes('plot') || lower.includes('show')) {
+            return {
+                type: 'line',
+                x1: centerX - 100,
+                y1: centerY,
+                x2: centerX + 100,
+                y2: centerY,
+            };
+        }
+
+        throw new Error('Could not parse instruction: ' + instruction);
     }
 
     executeCommand(command) {

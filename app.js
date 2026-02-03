@@ -72,13 +72,26 @@ function setupMatrixConnection() {
             statusEl.textContent = 'Disconnected';
             statusEl.className = 'status-indicator disconnected';
         } else {
-            // Connect as guest (for public rooms)
+            // Prompt for username and password
+            const username = prompt('Enter Matrix username (e.g., @user:matrix.inquiry.institute):');
+            if (!username) return;
+            
+            const password = prompt('Enter Matrix password:');
+            if (!password) return;
+            
             try {
                 connectBtn.textContent = 'Connecting...';
                 statusEl.textContent = 'Connecting...';
                 
                 matrixClient = new MatrixClient(MATRIX_ROOM_ID, MATRIX_SERVER);
-                await matrixClient.connectAsGuest();
+                
+                // Try to connect with credentials, fallback to guest if it fails
+                try {
+                    await matrixClient.connect(username, password);
+                } catch (authError) {
+                    console.warn('Auth failed, trying guest mode:', authError);
+                    await matrixClient.connectAsGuest();
+                }
                 
                 // Listen for messages
                 matrixClient.onMessage(async (message) => {
@@ -94,9 +107,6 @@ function setupMatrixConnection() {
                     }
                 });
                 
-                // Load recent messages
-                // Note: This would need to be implemented in MatrixClient
-                
                 connectBtn.textContent = 'Disconnect';
                 statusEl.textContent = 'Connected';
                 statusEl.className = 'status-indicator connected';
@@ -105,7 +115,7 @@ function setupMatrixConnection() {
                 connectBtn.textContent = 'Connect';
                 statusEl.textContent = 'Connection Failed';
                 statusEl.className = 'status-indicator disconnected';
-                alert('Failed to connect to Matrix room. Please check the room ID and server URL.');
+                alert('Failed to connect to Matrix room: ' + error.message);
             }
         }
     });
