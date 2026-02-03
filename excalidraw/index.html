@@ -6,7 +6,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Math Teaching Room - Excalidraw Test</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../styles.css">
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <style>
         .excalidraw-container {
             width: 100%;
@@ -94,8 +98,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@latest/dist/excalidraw.min.js"></script>
     <script src="https://unpkg.com/matrix-js-sdk@29.1.0/lib/browser-matrix.js"></script>
     <script src="https://sagecell.sagemath.org/static/embedded_sagecell.js"></script>
-    <script src="matrix-client.js"></script>
-    <script src="sage-integration.js"></script>
+    <script src="../matrix-client.js"></script>
+    <script src="../sage-integration.js"></script>
+    <script src="../ask-faculty-client.js"></script>
     <script src="excalidraw-controller.js"></script>
     <script src="excalidraw-app.js"></script>
 </body>

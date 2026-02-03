@@ -9,6 +9,7 @@ let tldrawController;
 let mathGraphing;
 let matrixClient;
 let sageIntegration;
+let askFacultyClient;
 
 // Matrix room configuration
 const MATRIX_ROOM_ID = '!math:matrix.inquiry.institute';
@@ -26,6 +27,12 @@ async function initializeApp() {
     
     // Initialize SageMath
     sageIntegration = new SageIntegration();
+    
+    // Initialize ask-faculty client (Pythagoras)
+    // Note: You'll need to set SUPABASE_URL and SUPABASE_ANON_KEY
+    const supabaseUrl = window.SUPABASE_URL || 'https://qjqjqjqjqjqjqjqj.supabase.co';
+    const supabaseAnonKey = window.SUPABASE_ANON_KEY || '';
+    askFacultyClient = new AskFacultyClient(supabaseUrl, supabaseAnonKey);
     
     // Initialize math graphing (after tldraw is ready)
     setTimeout(() => {
@@ -277,7 +284,7 @@ function setupChatInput() {
             }
         }
         
-        // Process as command
+        // Process as command first (drawing, graphing, etc.)
         const result = await processLLMCommand(message);
         if (result) {
             if (result.success) {
@@ -288,6 +295,21 @@ function setupChatInput() {
                 }
             } else {
                 addSystemMessage(`Error: ${result.error || 'Command failed'}`);
+            }
+        } else {
+            // If not a command, ask Pythagoras
+            if (askFacultyClient) {
+                addSystemMessage('Asking Pythagoras...');
+                const facultyResponse = await askFacultyClient.ask(message);
+                if (facultyResponse.response) {
+                    displayMessage({
+                        sender: 'Pythagoras',
+                        content: facultyResponse.response,
+                        timestamp: Date.now(),
+                    });
+                } else if (facultyResponse.error) {
+                    addSystemMessage(`Error asking Pythagoras: ${facultyResponse.error}`);
+                }
             }
         }
     };
@@ -359,7 +381,21 @@ function displayMessage(message) {
     
     const content = document.createElement('div');
     content.className = 'content';
-    content.textContent = message.content;
+    // Render KaTeX math if available
+    if (typeof renderMathInElement !== 'undefined') {
+        content.innerHTML = escapeHtml(message.content);
+        renderMathInElement(content, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+        });
+    } else {
+        content.textContent = message.content;
+    }
     messageEl.appendChild(content);
     
     const timestamp = document.createElement('div');
@@ -369,6 +405,12 @@ function displayMessage(message) {
     
     messagesContainer.appendChild(messageEl);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function addSystemMessage(text) {
