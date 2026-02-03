@@ -13,6 +13,9 @@ let llmController;
 const MATRIX_ROOM_ID = '!math:matrix.inquiry.institute'; // Update with actual room ID
 const MATRIX_SERVER = 'https://matrix.inquiry.institute';
 
+// Default test credentials (can be pre-filled for testing)
+const DEFAULT_TEST_USERNAME = '@custodian:matrix.inquiry.institute';
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
@@ -79,9 +82,10 @@ function setupMatrixConnection() {
             statusEl.className = 'status-indicator disconnected';
             authForm.style.display = 'none';
         } else {
-            // Show auth form
+            // Show auth form with default test username pre-filled
             authForm.style.display = 'block';
-            usernameInput.focus();
+            usernameInput.value = DEFAULT_TEST_USERNAME;
+            passwordInput.focus();
         }
     });
     
