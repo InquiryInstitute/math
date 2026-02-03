@@ -58,6 +58,7 @@ class LLMController {
             this.blackboard.drawFromLLM(message);
             return { success: true, message: 'Drawing command executed' };
         } catch (error) {
+            console.error('handleDrawingCommand error:', error);
             return { success: false, error: error.message };
         }
     }

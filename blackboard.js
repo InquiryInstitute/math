@@ -393,20 +393,35 @@ class Blackboard {
         // Parse LLM instruction and draw accordingly
         // This is a high-level interface for the LLM to control the blackboard
         try {
+            console.log('drawFromLLM called with:', instruction);
             const command = this.parseLLMInstruction(instruction);
-            this.executeCommand(command);
+            console.log('Parsed command:', command);
+            if (command) {
+                this.executeCommand(command);
+                console.log('Command executed successfully');
+            } else {
+                throw new Error('Failed to parse command');
+            }
         } catch (error) {
             console.error('Error executing LLM instruction:', error);
+            throw error; // Re-throw so caller knows it failed
         }
     }
 
     parseLLMInstruction(instruction) {
         // Simple parser - can be enhanced with more sophisticated NLP
-        const lower = instruction.toLowerCase();
+        if (!instruction || typeof instruction !== 'string') {
+            throw new Error('Invalid instruction: ' + instruction);
+        }
+        
+        const lower = instruction.toLowerCase().trim();
+        console.log('Parsing instruction:', instruction, 'lower:', lower);
         
         // Get canvas center as default position
-        const centerX = this.stage.width() / 2;
-        const centerY = this.stage.height() / 2;
+        const stageWidth = this.stage ? this.stage.width() : 1200;
+        const stageHeight = this.stage ? this.stage.height() : 800;
+        const centerX = stageWidth / 2;
+        const centerY = stageHeight / 2;
         
         // Draw a circle
         if (lower.includes('circle') || lower.includes('draw circle') || lower.includes('plot circle')) {
@@ -427,20 +442,23 @@ class Blackboard {
             };
         }
 
-        // Draw a line - handle various formats
-        if (lower.includes('line') || lower.includes('draw line') || lower.includes('plot line') || lower.includes('plot a line')) {
+        // Draw a line - handle various formats (check this first before other shape checks)
+        if (lower.includes('line')) {
+            console.log('Matched line command');
             // Try to find explicit coordinates first
             const points = instruction.match(/\((\d+)[,\s]+(\d+)\)/g);
             if (points && points.length >= 2) {
                 const p1 = points[0].match(/(\d+)[,\s]+(\d+)/);
                 const p2 = points[1].match(/(\d+)[,\s]+(\d+)/);
-                return {
-                    type: 'line',
-                    x1: parseInt(p1[1]),
-                    y1: parseInt(p1[2]),
-                    x2: parseInt(p2[1]),
-                    y2: parseInt(p2[2]),
-                };
+                if (p1 && p2) {
+                    return {
+                        type: 'line',
+                        x1: parseInt(p1[1]),
+                        y1: parseInt(p1[2]),
+                        x2: parseInt(p2[1]),
+                        y2: parseInt(p2[2]),
+                    };
+                }
             }
             
             // Try to find "from X,Y to X,Y" format
@@ -456,7 +474,8 @@ class Blackboard {
             }
             
             // Default: draw a horizontal line in the center
-            const length = 200;
+            const length = Math.min(200, stageWidth * 0.3);
+            console.log('Drawing default line at center:', centerX, centerY, 'length:', length);
             return {
                 type: 'line',
                 x1: centerX - length / 2,
