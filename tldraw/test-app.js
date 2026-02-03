@@ -284,32 +284,22 @@ function setupChatInput() {
             }
         }
         
-        // Process as command first (drawing, graphing, etc.)
-        const result = await processLLMCommand(message);
-        if (result) {
-            if (result.success) {
-                if (result.result) {
-                    addSystemMessage(`Computation result: ${result.result}`);
-                } else if (result.message) {
-                    addSystemMessage(result.message);
-                }
-            } else {
-                addSystemMessage(`Error: ${result.error || 'Command failed'}`);
-            }
-        } else {
-            // If not a command, ask Pythagoras
-            if (askFacultyClient) {
-                addSystemMessage('Asking Pythagoras...');
-                const facultyResponse = await askFacultyClient.ask(message);
-                if (facultyResponse.response) {
-                    displayMessage({
-                        sender: 'Pythagoras',
-                        content: facultyResponse.response,
-                        timestamp: Date.now(),
-                    });
-                } else if (facultyResponse.error) {
-                    addSystemMessage(`Error asking Pythagoras: ${facultyResponse.error}`);
-                }
+        // Always ask Pythagoras - the LLM controls the whiteboard
+        if (askFacultyClient) {
+            addSystemMessage('Asking Pythagoras...');
+            const facultyResponse = await askFacultyClient.ask(message);
+            if (facultyResponse.response) {
+                // Display the response
+                displayMessage({
+                    sender: 'Pythagoras',
+                    content: facultyResponse.response,
+                    timestamp: Date.now(),
+                });
+                
+                // Parse and execute any drawing commands from the LLM response
+                await executeLLMDrawingCommands(facultyResponse.response);
+            } else if (facultyResponse.error) {
+                addSystemMessage(`Error asking Pythagoras: ${facultyResponse.error}`);
             }
         }
     };
@@ -322,47 +312,124 @@ function setupChatInput() {
     });
 }
 
-async function processLLMCommand(message) {
-    const lower = message.toLowerCase().trim();
+/**
+ * Execute drawing commands from LLM response
+ * The LLM can specify drawing commands in its response
+ */
+async function executeLLMDrawingCommands(llmResponse) {
+    if (!llmResponse || typeof llmResponse !== 'string') return;
     
-    // Check if it's a graph equation command
-    if ((lower.includes('graph') || lower.includes('plot')) && 
-        (lower.includes('y =') || lower.includes('f(x)') || lower.match(/\w+\s*=\s*\w+/))) {
-        try {
-            if (mathGraphing) {
-                const result = await mathGraphing.graphEquation(message);
-                return result;
-            } else {
-                // Fallback to regular drawing
-                tldrawController.drawFromLLM(message);
-                return { success: true, message: 'Drawing command executed' };
+    // Look for drawing commands in the response
+    // Commands can be in JSON format: {"command": "draw", "type": "circle", ...}
+    // Or natural language: "draw a circle", "graph y = x^2", etc.
+    
+    try {
+        // Try to find JSON commands first
+        const jsonMatch = llmResponse.match(/\{[\s\S]*"command"[\s\S]*"draw"[\s\S]*\}/);
+        if (jsonMatch) {
+            const command = JSON.parse(jsonMatch[0]);
+            if (command.command === 'draw' && command.type) {
+                await executeDrawingCommand(command);
+                return;
             }
-        } catch (error) {
-            console.error('Graphing error:', error);
-            return { success: false, error: error.message };
         }
-    }
-    
-    // Check if it's a drawing command
-    const drawingKeywords = ['draw', 'create', 'make', 'add', 'show', 'display', 'plot', 'graph', 'sketch'];
-    if (drawingKeywords.some(keyword => lower.includes(keyword))) {
-        try {
-            tldrawController.drawFromLLM(message);
-            return { success: true, message: 'Drawing command executed' };
-        } catch (error) {
-            console.error('handleDrawingCommand error:', error);
-            return { success: false, error: error.message };
+        
+        // Look for natural language drawing commands
+        const drawingKeywords = ['draw', 'create', 'make', 'add', 'show', 'display', 'plot', 'graph', 'sketch'];
+        const lower = llmResponse.toLowerCase();
+        
+        if (drawingKeywords.some(keyword => lower.includes(keyword))) {
+            // Check if it's a graph equation command
+            if ((lower.includes('graph') || lower.includes('plot')) && 
+                (lower.includes('y =') || lower.includes('f(x)') || lower.match(/\w+\s*=\s*\w+/))) {
+                if (mathGraphing) {
+                    await mathGraphing.graphEquation(llmResponse);
+                }
+            } else {
+                // Regular drawing command
+                if (tldrawController) {
+                    tldrawController.drawFromLLM(llmResponse);
+                }
+            }
         }
+    } catch (error) {
+        console.error('Error executing LLM drawing commands:', error);
     }
+}
+
+/**
+ * Execute a structured drawing command from JSON
+ */
+async function executeDrawingCommand(command) {
+    if (!tldrawController) return;
     
-    // Check if it's a computation command
-    const computationKeywords = ['calculate', 'compute', 'solve', 'find', 'what is', 'derivative', 'integral', 'area', 'perimeter'];
-    if (computationKeywords.some(keyword => lower.includes(keyword))) {
-        // Could integrate with SageMath here
-        return { success: false, error: 'Computation commands not yet implemented in test page' };
+    try {
+        switch (command.type) {
+            case 'circle':
+                tldrawController.executeCommand({
+                    type: 'circle',
+                    x: command.x || 400,
+                    y: command.y || 300,
+                    radius: command.radius || 50,
+                });
+                break;
+                
+            case 'line':
+                tldrawController.executeCommand({
+                    type: 'line',
+                    x1: command.x1 || 300,
+                    y1: command.y1 || 300,
+                    x2: command.x2 || 500,
+                    y2: command.y2 || 300,
+                });
+                break;
+                
+            case 'rectangle':
+            case 'square':
+                tldrawController.executeCommand({
+                    type: 'rectangle',
+                    x: command.x || 350,
+                    y: command.y || 250,
+                    width: command.width || (command.type === 'square' ? 100 : 150),
+                    height: command.height || (command.type === 'square' ? 100 : 80),
+                });
+                break;
+                
+            case 'triangle':
+                tldrawController.executeCommand({
+                    type: 'triangle',
+                    x: command.x || 400,
+                    y: command.y || 300,
+                    size: command.size || 100,
+                });
+                break;
+                
+            case 'graph':
+            case 'graphFunction':
+                if (command.equation && mathGraphing) {
+                    await mathGraphing.graphEquation(command.equation, command.options);
+                } else {
+                    tldrawController.executeCommand({
+                        type: 'graph',
+                        x: command.x || 400,
+                        y: command.y || 300,
+                        length: command.length || 300,
+                    });
+                }
+                break;
+                
+            case 'text':
+                tldrawController.executeCommand({
+                    type: 'text',
+                    x: command.x || 400,
+                    y: command.y || 300,
+                    text: command.text || '',
+                });
+                break;
+        }
+    } catch (error) {
+        console.error('Error executing drawing command:', error);
     }
-    
-    return null;
 }
 
 function displayMessage(message) {

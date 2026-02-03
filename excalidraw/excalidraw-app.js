@@ -227,14 +227,19 @@ function setupMatrixConnection() {
             matrixClient.onMessage(async (message) => {
                 displayMessage(message);
                 
-                // Process as command
-                const result = await processLLMCommand(message.content);
-                if (result && result.success) {
-                    if (result.message) {
-                        addSystemMessage(result.message);
+                // Send to Pythagoras - LLM controls the whiteboard
+                if (askFacultyClient) {
+                    const facultyResponse = await askFacultyClient.ask(message.content);
+                    if (facultyResponse.response) {
+                        displayMessage({
+                            sender: 'Pythagoras',
+                            content: facultyResponse.response,
+                            timestamp: Date.now(),
+                        });
+                        
+                        // Execute any drawing commands from LLM response
+                        await executeLLMDrawingCommands(facultyResponse.response);
                     }
-                } else if (result && !result.success) {
-                    addSystemMessage(`Error: ${result.error || 'Command failed'}`);
                 }
             });
             
@@ -283,32 +288,22 @@ function setupChatInput() {
             }
         }
         
-        // Process as command first (drawing, etc.)
-        const result = await processLLMCommand(message);
-        if (result) {
-            if (result.success) {
-                if (result.result) {
-                    addSystemMessage(`Computation result: ${result.result}`);
-                } else if (result.message) {
-                    addSystemMessage(result.message);
-                }
-            } else {
-                addSystemMessage(`Error: ${result.error || 'Command failed'}`);
-            }
-        } else {
-            // If not a command, ask Pythagoras
-            if (askFacultyClient) {
-                addSystemMessage('Asking Pythagoras...');
-                const facultyResponse = await askFacultyClient.ask(message);
-                if (facultyResponse.response) {
-                    displayMessage({
-                        sender: 'Pythagoras',
-                        content: facultyResponse.response,
-                        timestamp: Date.now(),
-                    });
-                } else if (facultyResponse.error) {
-                    addSystemMessage(`Error asking Pythagoras: ${facultyResponse.error}`);
-                }
+        // Always ask Pythagoras - the LLM controls the whiteboard
+        if (askFacultyClient) {
+            addSystemMessage('Asking Pythagoras...');
+            const facultyResponse = await askFacultyClient.ask(message);
+            if (facultyResponse.response) {
+                // Display the response
+                displayMessage({
+                    sender: 'Pythagoras',
+                    content: facultyResponse.response,
+                    timestamp: Date.now(),
+                });
+                
+                // Parse and execute any drawing commands from the LLM response
+                await executeLLMDrawingCommands(facultyResponse.response);
+            } else if (facultyResponse.error) {
+                addSystemMessage(`Error asking Pythagoras: ${facultyResponse.error}`);
             }
         }
     };
@@ -321,29 +316,57 @@ function setupChatInput() {
     });
 }
 
-async function processLLMCommand(message) {
-    const lower = message.toLowerCase().trim();
+/**
+ * Execute drawing commands from LLM response
+ * The LLM can specify drawing commands in its response
+ */
+async function executeLLMDrawingCommands(llmResponse) {
+    if (!llmResponse || typeof llmResponse !== 'string') return;
     
-    // Check if it's a drawing command
-    const drawingKeywords = ['draw', 'create', 'make', 'add', 'show', 'display', 'plot', 'graph', 'sketch'];
-    if (drawingKeywords.some(keyword => lower.includes(keyword))) {
-        try {
-            excalidrawController.drawFromLLM(message);
-            return { success: true, message: 'Drawing command executed' };
-        } catch (error) {
-            console.error('handleDrawingCommand error:', error);
-            return { success: false, error: error.message };
+    // Look for drawing commands in the response
+    // Commands can be in JSON format: {"command": "draw", "type": "circle", ...}
+    // Or natural language: "draw a circle", "graph y = x^2", etc.
+    
+    try {
+        // Try to find JSON commands first
+        const jsonMatch = llmResponse.match(/\{[\s\S]*"command"[\s\S]*"draw"[\s\S]*\}/);
+        if (jsonMatch) {
+            const command = JSON.parse(jsonMatch[0]);
+            if (command.command === 'draw' && command.type) {
+                await executeDrawingCommand(command);
+                return;
+            }
         }
+        
+        // Look for natural language drawing commands
+        const drawingKeywords = ['draw', 'create', 'make', 'add', 'show', 'display', 'plot', 'graph', 'sketch'];
+        const lower = llmResponse.toLowerCase();
+        
+        if (drawingKeywords.some(keyword => lower.includes(keyword))) {
+            // Regular drawing command
+            if (excalidrawController) {
+                excalidrawController.drawFromLLM(llmResponse);
+            }
+        }
+    } catch (error) {
+        console.error('Error executing LLM drawing commands:', error);
     }
+}
+
+/**
+ * Execute a structured drawing command from JSON
+ */
+async function executeDrawingCommand(command) {
+    if (!excalidrawController) return;
     
-    // Check if it's a computation command
-    const computationKeywords = ['calculate', 'compute', 'solve', 'find', 'what is', 'derivative', 'integral', 'area', 'perimeter'];
-    if (computationKeywords.some(keyword => lower.includes(keyword))) {
-        // Could integrate with SageMath here
-        return { success: false, error: 'Computation commands not yet implemented in test page' };
+    try {
+        excalidrawController.executeCommand({
+            type: command.type,
+            ...command.params,
+        });
+    } catch (error) {
+        console.error('Error executing drawing command:', error);
     }
-    
-    return null;
 }
 
 function displayMessage(message) {
