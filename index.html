@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Teaching Room - Inquiry Institute</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Math Teaching Room</h1>
+            <div class="status">
+                <span id="matrix-status" class="status-indicator">Connecting...</span>
+                <span id="sage-status" class="status-indicator">Ready</span>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Blackboard Section -->
+            <section class="blackboard-section">
+                <div class="blackboard-toolbar">
+                    <button class="tool-btn active" data-tool="select" title="Select">✋</button>
+                    <button class="tool-btn" data-tool="line" title="Line">📏</button>
+                    <button class="tool-btn" data-tool="circle" title="Circle">⭕</button>
+                    <button class="tool-btn" data-tool="rectangle" title="Rectangle">▭</button>
+                    <button class="tool-btn" data-tool="polygon" title="Polygon">⬡</button>
+                    <button class="tool-btn" data-tool="text" title="Text">A</button>
+                    <button class="tool-btn" data-tool="label" title="Label">🏷️</button>
+                    <button class="tool-btn" data-tool="erase" title="Erase">🧹</button>
+                    <button class="tool-btn" id="clear-btn" title="Clear All">🗑️</button>
+                </div>
+                
+                <div class="blackboard-container">
+                    <canvas id="blackboard" width="1200" height="800"></canvas>
+                </div>
+
+                <!-- Interactive Controls Panel -->
+                <div class="controls-panel" id="controls-panel">
+                    <h3>Parameters</h3>
+                    <div id="sliders-container"></div>
+                </div>
+            </section>
+
+            <!-- Chat Section -->
+            <section class="chat-section">
+                <div class="chat-header">
+                    <h2>Matrix Chat</h2>
+                    <button id="connect-btn" class="connect-btn">Connect</button>
+                </div>
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Type a message or ask the LLM to draw something..." />
+                    <button id="send-btn">Send</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- SageMath Cell (hidden, used for computations) -->
+        <div id="sage-cell" style="display: none;"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/konva@9/konva.min.js"></script>
+    <script src="https://unpkg.com/matrix-js-sdk@latest/lib/browser-matrix.js"></script>
+    <script src="https://sagecell.sagemath.org/static/embedded_sagecell.js"></script>
+    <script src="matrix-client.js"></script>
+    <script src="blackboard.js"></script>
+    <script src="sage-integration.js"></script>
+    <script src="llm-controller.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
