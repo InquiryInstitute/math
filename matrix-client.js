@@ -16,6 +16,11 @@ class MatrixClient {
     async connect(username, password) {
         try {
             // Initialize Matrix client
+            const sdk = window.matrixcs || window.matrix;
+            if (!sdk) {
+                throw new Error('Matrix SDK not loaded');
+            }
+
             this.client = sdk.createClient({
                 baseUrl: this.serverUrl,
             });
