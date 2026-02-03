@@ -82,10 +82,17 @@ function setupMatrixConnection() {
             statusEl.className = 'status-indicator disconnected';
             authForm.style.display = 'none';
         } else {
-            // Show auth form with default test username pre-filled
+            // Show auth form with saved or default username pre-filled
             authForm.style.display = 'block';
-            usernameInput.value = DEFAULT_TEST_USERNAME;
-            passwordInput.focus();
+            const savedUsername = localStorage.getItem('matrix_test_username');
+            const savedPassword = localStorage.getItem('matrix_test_password');
+            usernameInput.value = savedUsername || DEFAULT_TEST_USERNAME;
+            if (savedPassword) {
+                passwordInput.value = savedPassword;
+                passwordInput.focus();
+            } else {
+                passwordInput.focus();
+            }
         }
     });
     
@@ -93,16 +100,6 @@ function setupMatrixConnection() {
     authCancelBtn.addEventListener('click', () => {
         authForm.style.display = 'none';
     });
-    
-    // Load saved credentials from localStorage (for testing convenience)
-    const savedUsername = localStorage.getItem('matrix_test_username');
-    const savedPassword = localStorage.getItem('matrix_test_password');
-    if (savedUsername) {
-        usernameInput.value = savedUsername;
-    }
-    if (savedPassword) {
-        passwordInput.value = savedPassword;
-    }
     
     // Connect with credentials
     authConnectBtn.addEventListener('click', async () => {
