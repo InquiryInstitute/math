@@ -210,7 +210,7 @@ class TldrawController {
                             a1: { x: 0, y: 0, id: 'a1' },
                             a2: { x: command.x2 - command.x1, y: command.y2 - command.y1, id: 'a2' },
                         },
-                        color: 'white',
+                        color: command.color || 'white',
                         size: 'm',
                     },
                 });

@@ -117,33 +117,21 @@ print(points)
         const halfLength = length / 2;
         
         // X-axis
-        this.controller.editor.createShape({
+        this.controller.executeCommand({
             type: 'line',
-            x: centerX - halfLength,
-            y: centerY,
-            props: {
-                points: {
-                    a1: { x: 0, y: 0, id: 'a1' },
-                    a2: { x: length, y: 0, id: 'a2' },
-                },
-                stroke: '#ffffff',
-                strokeWidth: 2,
-            },
+            x1: centerX - halfLength,
+            y1: centerY,
+            x2: centerX + halfLength,
+            y2: centerY,
         });
         
         // Y-axis
-        this.controller.editor.createShape({
+        this.controller.executeCommand({
             type: 'line',
-            x: centerX,
-            y: centerY - halfLength,
-            props: {
-                points: {
-                    a1: { x: 0, y: 0, id: 'a1' },
-                    a2: { x: 0, y: length, id: 'a2' },
-                },
-                stroke: '#ffffff',
-                strokeWidth: 2,
-            },
+            x1: centerX,
+            y1: centerY - halfLength,
+            x2: centerX,
+            y2: centerY + halfLength,
         });
     }
 
@@ -161,18 +149,13 @@ print(points)
             const p1 = canvasPoints[i];
             const p2 = canvasPoints[i + 1];
             
-            this.controller.editor.createShape({
+            // Use the controller's line drawing
+            this.controller.executeCommand({
                 type: 'line',
-                x: p1.x,
-                y: p1.y,
-                props: {
-                    points: {
-                        a1: { x: 0, y: 0, id: 'a1' },
-                        a2: { x: p2.x - p1.x, y: p2.y - p1.y, id: 'a2' },
-                    },
-                    stroke: '#00ff00', // Green for graphs
-                    strokeWidth: 2,
-                },
+                x1: p1.x,
+                y1: p1.y,
+                x2: p2.x,
+                y2: p2.y,
             });
         }
     }
