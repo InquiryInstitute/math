@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Math Teaching Room - tldraw Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .tldraw-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        #tldraw-canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Math Teaching Room - tldraw Test</h1>
+            <div class="status">
+                <span id="matrix-status" class="status-indicator">Connecting...</span>
+                <span id="sage-status" class="status-indicator">Ready</span>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Blackboard Section with tldraw -->
+            <section class="blackboard-section">
+                <div class="blackboard-toolbar">
+                    <button id="clear-tldraw-btn" class="tool-btn" title="Clear All">🗑️</button>
+                    <button id="export-btn" class="tool-btn" title="Export">💾</button>
+                </div>
+                
+                <div class="blackboard-container">
+                    <div id="tldraw-canvas" class="tldraw-container"></div>
+                </div>
+
+                <!-- Interactive Controls Panel -->
+                <div class="controls-panel" id="controls-panel">
+                    <h3>Parameters</h3>
+                    <div id="sliders-container"></div>
+                </div>
+            </section>
+
+            <!-- Chat Section -->
+            <section class="chat-section">
+                <div class="chat-header">
+                    <h2>Matrix Chat</h2>
+                    <button id="connect-btn" class="connect-btn">Connect</button>
+                </div>
+                <div id="auth-form" style="display: none; padding: 1rem; background: #1a1a1a; border-radius: 0.5rem; margin-bottom: 1rem;">
+                    <input type="text" id="matrix-username" placeholder="Username (e.g., @user:matrix.inquiry.institute)" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 0.25rem; color: #e0e0e0;">
+                    <input type="password" id="matrix-password" placeholder="Password" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 0.25rem; color: #e0e0e0;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="auth-connect-btn" style="flex: 1; padding: 0.5rem; background: #0066cc; border: none; border-radius: 0.25rem; color: #fff; cursor: pointer;">Connect</button>
+                        <button id="auth-cancel-btn" style="flex: 1; padding: 0.5rem; background: #3a3a3a; border: none; border-radius: 0.25rem; color: #e0e0e0; cursor: pointer;">Cancel</button>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Type a message or ask the LLM to draw something..." />
+                    <button id="send-btn">Send</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- SageMath Cell (hidden, used for computations) -->
+        <div id="sage-cell" style="display: none;"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/tldraw@2/dist/tldraw.min.js"></script>
+    <script src="https://unpkg.com/matrix-js-sdk@29.1.0/lib/browser-matrix.js"></script>
+    <script src="https://sagecell.sagemath.org/static/embedded_sagecell.js"></script>
+    <script src="matrix-client.js"></script>
+    <script src="sage-integration.js"></script>
+    <script src="tldraw-controller.js"></script>
+    <script src="test-app.js"></script>
+</body>
+</html>
