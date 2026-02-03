@@ -77,9 +77,18 @@
     <script src="https://unpkg.com/matrix-js-sdk@29.1.0/lib/browser-matrix.js"></script>
     <script src="https://sagecell.sagemath.org/static/embedded_sagecell.js"></script>
     <script src="matrix-client.js"></script>
-    <script src="blackboard.js"></script>
+    <script src="blackboard.js" onerror="console.error('Failed to load blackboard.js');"></script>
     <script src="sage-integration.js"></script>
     <script src="llm-controller.js"></script>
     <script src="app.js"></script>
+    <script>
+        // Verify all required classes are loaded
+        window.addEventListener('load', () => {
+            if (typeof Blackboard === 'undefined') {
+                console.error('Blackboard class not loaded. Reloading page...');
+                setTimeout(() => location.reload(), 2000);
+            }
+        });
+    </script>
 </body>
 </html>
