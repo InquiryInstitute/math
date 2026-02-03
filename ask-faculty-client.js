@@ -40,6 +40,12 @@ class AskFacultyClient {
 
             if (!response.ok) {
                 const errorText = await response.text();
+                console.error('ask-faculty error details:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    url: `${this.supabaseUrl}/functions/v1/ask-faculty`,
+                    error: errorText
+                });
                 throw new Error(`ask-faculty error: ${response.status} - ${errorText}`);
             }
 
@@ -57,6 +63,12 @@ class AskFacultyClient {
             };
         } catch (error) {
             console.error('AskFacultyClient error:', error);
+            console.error('Supabase URL being used:', this.supabaseUrl);
+            console.error('Full error details:', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack
+            });
             return {
                 response: null,
                 error: error.message,
