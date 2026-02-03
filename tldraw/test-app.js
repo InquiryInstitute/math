@@ -68,15 +68,19 @@ async function initializeApp() {
 
     // Setup export button
     document.getElementById('export-btn').addEventListener('click', () => {
-        const shapes = tldrawEditor.getCurrentPageShapes();
-        const data = JSON.stringify(shapes, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'whiteboard-export.json';
-        a.click();
-        URL.revokeObjectURL(url);
+        if (tldrawEditor) {
+            // Use tldraw's real API
+            const shapeIds = tldrawEditor.getCurrentPageShapeIds();
+            const shapes = shapeIds.map(id => tldrawEditor.getShape(id));
+            const data = JSON.stringify(shapes, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'whiteboard-export.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
     });
 }
 
