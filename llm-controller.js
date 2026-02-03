@@ -35,7 +35,7 @@ class LLMController {
     }
 
     isDrawingCommand(message) {
-        const keywords = ['draw', 'create', 'make', 'add', 'show', 'display', 'plot'];
+        const keywords = ['draw', 'create', 'make', 'add', 'show', 'display', 'plot', 'graph', 'sketch'];
         const lower = message.toLowerCase();
         return keywords.some(keyword => lower.includes(keyword));
     }

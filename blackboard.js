@@ -485,6 +485,20 @@ class Blackboard {
             };
         }
 
+        // Draw a square
+        if (lower.includes('square') || (lower.includes('draw') && lower.includes('square'))) {
+            const sizeMatch = instruction.match(/size[:\s]+(\d+)/i) || instruction.match(/(\d+)[\s]*x[\s]*\d+/i);
+            const size = sizeMatch ? parseInt(sizeMatch[1]) : 100;
+            
+            return {
+                type: 'rectangle',
+                x: centerX - size / 2,
+                y: centerY - size / 2,
+                width: size,
+                height: size,
+            };
+        }
+
         // Draw a rectangle
         if (lower.includes('rectangle') || lower.includes('rect') || lower.includes('draw rectangle') || lower.includes('plot rectangle')) {
             const match = instruction.match(/width[:\s]+(\d+).*height[:\s]+(\d+)/i);
@@ -498,6 +512,64 @@ class Blackboard {
                 width: width,
                 height: height,
             };
+        }
+
+        // Draw a triangle
+        if (lower.includes('triangle') || (lower.includes('draw') && lower.includes('triangle'))) {
+            const size = 100;
+            const height = size * 0.866; // Equilateral triangle height
+            return {
+                type: 'polygon',
+                points: [
+                    centerX, centerY - height * 2/3,           // Top point
+                    centerX - size/2, centerY + height * 1/3, // Bottom left
+                    centerX + size/2, centerY + height * 1/3  // Bottom right
+                ]
+            };
+        }
+
+        // Graph/plot commands
+        if (lower.includes('graph') || (lower.includes('plot') && (lower.includes('function') || lower.includes('graph')))) {
+            // For now, draw axes and a simple line graph
+            const axisLength = Math.min(300, stageWidth * 0.4);
+            
+            // Draw x-axis
+            const xAxis = {
+                type: 'line',
+                x1: centerX - axisLength / 2,
+                y1: centerY,
+                x2: centerX + axisLength / 2,
+                y2: centerY,
+            };
+            
+            // Draw y-axis
+            const yAxis = {
+                type: 'line',
+                x1: centerX,
+                y1: centerY - axisLength / 2,
+                x2: centerX,
+                y2: centerY + axisLength / 2,
+            };
+            
+            // Execute both axes
+            this.executeCommand(xAxis);
+            this.executeCommand(yAxis);
+            
+            // Try to parse function if provided
+            const funcMatch = instruction.match(/y\s*=\s*([^,]+)/i) || instruction.match(/f\(x\)\s*=\s*([^,]+)/i);
+            if (funcMatch) {
+                // For simple linear functions, draw a line
+                // This is a simplified version - could be enhanced
+                return {
+                    type: 'line',
+                    x1: centerX - axisLength / 2,
+                    y1: centerY - 50,
+                    x2: centerX + axisLength / 2,
+                    y2: centerY + 50,
+                };
+            }
+            
+            return xAxis; // Return x-axis as primary command
         }
 
         // Add label
@@ -531,8 +603,22 @@ class Blackboard {
             }
         }
 
+        // Handle "draw" with common shapes
+        if (lower.includes('draw')) {
+            // Draw a square by default if no shape specified
+            if (!lower.includes('circle') && !lower.includes('line') && !lower.includes('rect') && !lower.includes('triangle')) {
+                return {
+                    type: 'rectangle',
+                    x: centerX - 50,
+                    y: centerY - 50,
+                    width: 100,
+                    height: 100,
+                };
+            }
+        }
+
         // If we get here and it's a drawing command, try to draw a simple line
-        if (lower.includes('draw') || lower.includes('plot') || lower.includes('show')) {
+        if (lower.includes('plot') || lower.includes('show') || lower.includes('graph')) {
             return {
                 type: 'line',
                 x1: centerX - 100,
@@ -583,6 +669,18 @@ class Blackboard {
                 });
                 this.layer.add(rect);
                 this.shapes.push(rect);
+                break;
+
+            case 'polygon':
+                const polygon = new Konva.Line({
+                    points: command.points,
+                    stroke: '#ffffff',
+                    strokeWidth: 2,
+                    fill: 'transparent',
+                    closed: true,
+                });
+                this.layer.add(polygon);
+                this.shapes.push(polygon);
                 break;
 
             case 'label':
