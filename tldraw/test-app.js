@@ -228,14 +228,19 @@ function setupMatrixConnection() {
             matrixClient.onMessage(async (message) => {
                 displayMessage(message);
                 
-                // Process as command
-                const result = await processLLMCommand(message.content);
-                if (result && result.success) {
-                    if (result.message) {
-                        addSystemMessage(result.message);
+                // Send to Pythagoras - LLM controls the whiteboard
+                if (askFacultyClient) {
+                    const facultyResponse = await askFacultyClient.ask(message.content);
+                    if (facultyResponse.response) {
+                        displayMessage({
+                            sender: 'Pythagoras',
+                            content: facultyResponse.response,
+                            timestamp: Date.now(),
+                        });
+                        
+                        // Execute any drawing commands from LLM response
+                        await executeLLMDrawingCommands(facultyResponse.response);
                     }
-                } else if (result && !result.success) {
-                    addSystemMessage(`Error: ${result.error || 'Command failed'}`);
                 }
             });
             
