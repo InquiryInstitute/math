@@ -63,60 +63,98 @@ function setupToolButtons() {
 function setupMatrixConnection() {
     const connectBtn = document.getElementById('connect-btn');
     const statusEl = document.getElementById('matrix-status');
+    const authForm = document.getElementById('auth-form');
+    const usernameInput = document.getElementById('matrix-username');
+    const passwordInput = document.getElementById('matrix-password');
+    const authConnectBtn = document.getElementById('auth-connect-btn');
+    const authCancelBtn = document.getElementById('auth-cancel-btn');
     
-    connectBtn.addEventListener('click', async () => {
+    // Show auth form when connect is clicked
+    connectBtn.addEventListener('click', () => {
         if (matrixClient && matrixClient.isConnected) {
             // Disconnect
             matrixClient.disconnect();
             connectBtn.textContent = 'Connect';
             statusEl.textContent = 'Disconnected';
             statusEl.className = 'status-indicator disconnected';
+            authForm.style.display = 'none';
         } else {
-            // Prompt for username and password
-            const username = prompt('Enter Matrix username (e.g., @user:matrix.inquiry.institute):');
-            if (!username) return;
+            // Show auth form
+            authForm.style.display = 'block';
+            usernameInput.focus();
+        }
+    });
+    
+    // Cancel auth form
+    authCancelBtn.addEventListener('click', () => {
+        authForm.style.display = 'none';
+        usernameInput.value = '';
+        passwordInput.value = '';
+    });
+    
+    // Connect with credentials
+    authConnectBtn.addEventListener('click', async () => {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+        
+        if (!username || !password) {
+            alert('Please enter both username and password');
+            return;
+        }
+        
+        try {
+            connectBtn.textContent = 'Connecting...';
+            statusEl.textContent = 'Connecting...';
+            authForm.style.display = 'none';
             
-            const password = prompt('Enter Matrix password:');
-            if (!password) return;
+            matrixClient = new MatrixClient(MATRIX_ROOM_ID, MATRIX_SERVER);
             
+            // Try to connect with credentials, fallback to guest if it fails
             try {
-                connectBtn.textContent = 'Connecting...';
-                statusEl.textContent = 'Connecting...';
-                
-                matrixClient = new MatrixClient(MATRIX_ROOM_ID, MATRIX_SERVER);
-                
-                // Try to connect with credentials, fallback to guest if it fails
-                try {
-                    await matrixClient.connect(username, password);
-                } catch (authError) {
-                    console.warn('Auth failed, trying guest mode:', authError);
-                    await matrixClient.connectAsGuest();
-                }
-                
-                // Listen for messages
-                matrixClient.onMessage(async (message) => {
-                    displayMessage(message);
-                    
-                    // Check if message is a command for the blackboard
-                    const result = await llmController.processMessage(message.content);
-                    if (result && result.success) {
-                        // Optionally send a response back to chat
-                        if (result.message) {
-                            addSystemMessage(result.message);
-                        }
-                    }
-                });
-                
-                connectBtn.textContent = 'Disconnect';
-                statusEl.textContent = 'Connected';
-                statusEl.className = 'status-indicator connected';
-            } catch (error) {
-                console.error('Failed to connect to Matrix:', error);
-                connectBtn.textContent = 'Connect';
-                statusEl.textContent = 'Connection Failed';
-                statusEl.className = 'status-indicator disconnected';
-                alert('Failed to connect to Matrix room: ' + error.message);
+                await matrixClient.connect(username, password);
+                console.log('Connected with credentials');
+            } catch (authError) {
+                console.warn('Auth failed, trying guest mode:', authError);
+                await matrixClient.connectAsGuest();
             }
+            
+            // Listen for messages
+            matrixClient.onMessage(async (message) => {
+                displayMessage(message);
+                
+                // Check if message is a command for the blackboard
+                const result = await llmController.processMessage(message.content);
+                if (result && result.success) {
+                    // Optionally send a response back to chat
+                    if (result.message) {
+                        addSystemMessage(result.message);
+                    }
+                } else if (result && !result.success) {
+                    addSystemMessage(`Error: ${result.error || 'Command failed'}`);
+                }
+            });
+            
+            connectBtn.textContent = 'Disconnect';
+            statusEl.textContent = 'Connected';
+            statusEl.className = 'status-indicator connected';
+            
+            // Clear credentials
+            usernameInput.value = '';
+            passwordInput.value = '';
+        } catch (error) {
+            console.error('Failed to connect to Matrix:', error);
+            connectBtn.textContent = 'Connect';
+            statusEl.textContent = 'Connection Failed';
+            statusEl.className = 'status-indicator disconnected';
+            authForm.style.display = 'block';
+            alert('Failed to connect to Matrix room: ' + error.message);
+        }
+    });
+    
+    // Allow Enter key to submit
+    passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            authConnectBtn.click();
         }
     });
 }

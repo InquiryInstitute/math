@@ -52,6 +52,14 @@
                     <h2>Matrix Chat</h2>
                     <button id="connect-btn" class="connect-btn">Connect</button>
                 </div>
+                <div id="auth-form" style="display: none; padding: 1rem; background: #1a1a1a; border-radius: 0.5rem; margin-bottom: 1rem;">
+                    <input type="text" id="matrix-username" placeholder="Username (e.g., @user:matrix.inquiry.institute)" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 0.25rem; color: #e0e0e0;">
+                    <input type="password" id="matrix-password" placeholder="Password" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 0.25rem; color: #e0e0e0;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="auth-connect-btn" style="flex: 1; padding: 0.5rem; background: #0066cc; border: none; border-radius: 0.25rem; color: #fff; cursor: pointer;">Connect</button>
+                        <button id="auth-cancel-btn" style="flex: 1; padding: 0.5rem; background: #3a3a3a; border: none; border-radius: 0.25rem; color: #e0e0e0; cursor: pointer;">Cancel</button>
+                    </div>
+                </div>
                 <div class="chat-messages" id="chat-messages"></div>
                 <div class="chat-input-container">
                     <input type="text" id="chat-input" placeholder="Type a message or ask the LLM to draw something..." />
