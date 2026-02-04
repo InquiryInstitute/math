@@ -6,7 +6,7 @@
 class AskFacultyClient {
     constructor(supabaseUrl, supabaseAnonKey) {
         // Default to Inquiry.Institute Supabase project
-        this.supabaseUrl = supabaseUrl || 'https://xougqdomkoisrxdnagcj.supabase.co';
+        this.supabaseUrl = supabaseUrl || 'https://pilmscrodlitdrygabvo.supabase.co';
         this.supabaseAnonKey = supabaseAnonKey || '';
         this.facultyId = 'a.pythagoras'; // Pythagoras
         this.conversationHistory = [];

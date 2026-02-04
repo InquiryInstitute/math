@@ -35,7 +35,7 @@ async function initializeApp() {
     // Initialize ask-faculty client (Pythagoras)
     // Note: You can override SUPABASE_URL and SUPABASE_ANON_KEY via window variables
     // Default uses Inquiry.Institute Supabase project
-    const supabaseUrl = window.SUPABASE_URL || 'https://xougqdomkoisrxdnagcj.supabase.co';
+        const supabaseUrl = window.SUPABASE_URL || 'https://pilmscrodlitdrygabvo.supabase.co';
     const supabaseAnonKey = window.SUPABASE_ANON_KEY || 'sb_publishable_1Zt0VjMX57VdYC7dH-GG1A_RFZyuwc9';
     askFacultyClient = new AskFacultyClient(supabaseUrl, supabaseAnonKey);
     

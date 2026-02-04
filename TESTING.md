@@ -30,7 +30,7 @@ Open browser console and run:
 
 ```javascript
 // Set Supabase credentials if needed (optional, defaults are set)
-window.SUPABASE_URL = 'https://xougqdomkoisrxdnagcj.supabase.co';
+window.SUPABASE_URL = 'https://pilmscrodlitdrygabvo.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_1Zt0VjMX57VdYC7dH-GG1A_RFZyuwc9';
 
 // Test asking Pythagoras directly
@@ -64,7 +64,7 @@ When you ask Pythagoras about his theorem:
 ### No Response from Pythagoras
 
 - Check browser console for errors
-- Verify Supabase URL is correct: `https://xougqdomkoisrxdnagcj.supabase.co`
+- Verify Supabase URL is correct: `https://pilmscrodlitdrygabvo.supabase.co`
 - Check that ask-faculty edge function is deployed
 - Verify `a.pythagoras` exists in the faculty table
 
